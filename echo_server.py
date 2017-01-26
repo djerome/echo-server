@@ -11,6 +11,9 @@ import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+# Initiatizations
+receive_chunk = 16
+
 # logging constants
 log_file = "/var/log/conn_test/conn_test.log"
 log_format = "%(asctime)s: %(message)s"
@@ -51,29 +54,25 @@ sock.listen(5)
 # Loop infinitely and wait for a connection
 while True:
 	connection, client_address = sock.accept()
-	ip = client_address[0]
-	client_fqdn = socket.gethostbyaddr(ip)
-	print 'IP = ' + ip + ', FQDN = ' + client_fqdn[0]
+	client_ip = client_address[0]
+	client_fqdn = socket.gethostbyaddr(client_ip)
+	print 'IP = ' + client_ip + ', FQDN = ' + client_fqdn[0]
 	try:
-		logger.info('Connection from ' + str(client_address))
 		print('Connection from ' + str(client_address))
 
 		# Receive the data in small chunks and
 		# retransmit it
 		while True:
-			data = connection.recv(16)
+			data = connection.recv(receive_chunk)
 			print('received {!r}'.format(data))
 			if data:
-				logger.info('Sending data back to ' + str(client_address))
 				print('Sending data back to ' + str(client_address))
 				connection.sendall(data)
 			else:
-				logger.warn('No data from ' + str(client_address))
+				logger.warn('No data from {0} ({1})'.format(client_fqdn, client_ip))
 				print('No data from ' + str(client_address))
 				break
 	finally:
 		# Clean # up # the # connection
 		connection.close()
-		logger.info('Closing connection from ' + str(client_address))
 		print('Closing connection from ' + str(client_address))
-
